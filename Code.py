@@ -1,6 +1,129 @@
 import streamlit as st
 import random
 
+# --- KONFIGURATION ---
+st.set_page_config(page_title="Pokémon Streamlit-Edition", page_icon="🌿", layout="centered")
+
+# --- STYLE ---
+st.markdown("""
+    <style>
+    .map-cell { width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; border: 1px solid #ddd; font-size: 24px; }
+    .player { background-color: #ffcccb; border-radius: 5px; }
+    .grass { background-color: #90ee90; }
+    .wall { background-color: #555; }
+    .pokemon-card { padding: 20px; border-radius: 10px; background-color: #f0f2f6; text-align: center; border: 2px solid #ed1c24; }
+    </style>
+    """, unsafe_allow_html=True)
+
+# --- DATEN ---
+POKEMON_DATA = {
+    "Glumanda": {"Typ": "Feuer", "HP": 39, "Angriff": 52, "Bild": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/4.png"},
+    "Schiggy": {"Typ": "Wasser", "HP": 44, "Angriff": 48, "Bild": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/7.png"},
+    "Bisasam": {"Typ": "Pflanze", "HP": 45, "Angriff": 49, "Bild": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1.png"},
+    "Pikachu": {"Typ": "Elektro", "HP": 35, "Angriff": 55, "Bild": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png"}
+}
+
+MAP_SIZE = 6
+# 0 = Leer, 1 = Gras (Begegnung möglich), 2 = Wand
+GAME_MAP = [
+    [2, 2, 2, 2, 2, 2],
+    [2, 0, 0, 1, 1, 2],
+    [2, 0, 0, 1, 1, 2],
+    [2, 1, 1, 0, 0, 2],
+    [2, 1, 1, 0, 0, 2],
+    [2, 2, 2, 2, 2, 2],
+]
+
+# --- INITIALISIERUNG ---
+if 'pos' not in st.session_state:
+    st.session_state.pos = [1, 1] # Startposition [y, x]
+    st.session_state.battle = False
+    st.session_state.player_pkmn = None
+
+# --- FUNKTIONEN ---
+def move_player(dy, dx):
+    new_y = st.session_state.pos[0] + dy
+    new_x = st.session_state.pos[1] + dx
+    if GAME_MAP[new_y][new_x] != 2: # Keine Wand
+        st.session_state.pos = [new_y, new_x]
+        # Check für Wild-Begegnung im Gras (Typ 1)
+        if GAME_MAP[new_y][new_x] == 1 and random.random() < 0.3:
+            start_battle()
+
+def start_battle():
+    enemy_name = random.choice(list(POKEMON_DATA.keys()))
+    st.session_state.enemy_pkmn = POKEMON_DATA[enemy_name].copy()
+    st.session_state.enemy_pkmn["Name"] = enemy_name
+    st.session_state.enemy_hp = st.session_state.enemy_pkmn["HP"]
+    st.session_state.player_hp = st.session_state.player_pkmn["HP"]
+    st.session_state.battle = True
+    st.session_state.logs = [f"Ein wildes {enemy_name} greift an!"]
+
+# --- UI LOGIK ---
+st.title("🚶 Pokémon Welt-Modus")
+
+if st.session_state.player_pkmn is None:
+    st.subheader("Wähle deinen Begleiter:")
+    choice = st.selectbox("Pokémon", list(POKEMON_DATA.keys()))
+    if st.button("Start"):
+        st.session_state.player_pkmn = POKEMON_DATA[choice].copy()
+        st.session_state.player_pkmn["Name"] = choice
+        st.rerun()
+
+elif st.session_state.battle:
+    # --- KAMPF-MODUS (Dein alter Code hier integriert) ---
+    st.warning("⚔️ KAMPF!")
+    col1, col2 = st.columns(2)
+    with col1:
+        st.image(st.session_state.player_pkmn["Bild"], caption=f"Du ({st.session_state.player_hp} HP)")
+    with col2:
+        st.image(st.session_state.enemy_pkmn["Bild"], caption=f"Gegner ({st.session_state.enemy_hp} HP)")
+    
+    if st.button("💥 Angriff"):
+        dmg = random.randint(5, 15)
+        st.session_state.enemy_hp -= dmg
+        if st.session_state.enemy_hp <= 0:
+            st.success("Gegner besiegt!")
+            st.session_state.battle = False
+        else:
+            st.session_state.player_hp -= random.randint(5, 10)
+        st.rerun()
+
+else:
+    # --- MAP-MODUS ---
+    col_map, col_ctrl = st.columns([2, 1])
+
+    with col_map:
+        for y in range(MAP_SIZE):
+            cols = st.columns(MAP_SIZE)
+            for x in range(MAP_SIZE):
+                cell_type = GAME_MAP[y][x]
+                content = ""
+                css_class = "map-cell"
+                
+                if [y, x] == st.session_state.pos:
+                    content = "🚶"
+                    css_class += " player"
+                elif cell_type == 1:
+                    content = "🌿"
+                    css_class += " grass"
+                elif cell_type == 2:
+                    content = "🌲"
+                    css_class += " wall"
+                
+                cols[x].markdown(f"<div class='{css_class}'>{content}</div>", unsafe_allow_html=True)
+
+    with col_ctrl:
+        st.write("Steuerung:")
+        if st.button("🔼 Oben"): move_player(-1, 0); st.rerun()
+        c1, c2 = st.columns(2)
+        if c1.button("◀️ Links"): move_player(0, -1); st.rerun()
+        if c2.button("▶️ Rechts"): move_player(0, 1); st.rerun()
+        if st.button("🔽 Unten"): move_player(1, 0); st.rerun()
+        
+        st.info("Laufe durch das hohe Gras (🌿) für Kämpfe!")import streamlit as st
+import random
+
 # --- KONFIGURATION & STYLES ---
 st.set_page_config(page_title="Pokémon Streamlit-Edition", page_icon="🔥")
 
