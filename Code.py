@@ -121,8 +121,7 @@ else:
         if c2.button("▶️ Rechts"): move_player(0, 1); st.rerun()
         if st.button("🔽 Unten"): move_player(1, 0); st.rerun()
         
-        st.info("Laufe durch das hohe Gras (🌿) für Kämpfe!")import streamlit as st
-import random
+        st.info("Laufe durch das hohe Gras (🌿) für Kämpfe!")
 
 # --- KONFIGURATION & STYLES ---
 st.set_page_config(page_title="Pokémon Streamlit-Edition", page_icon="🔥")
