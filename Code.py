@@ -66,7 +66,7 @@ else:
     col1, col2 = st.columns(2)
     
     with col1:
-        st.markdown(f"<div class='pokemon-card'><h3>Dein {st.session_state.player_pkmn['Name']}</h3>", unsafe_allow_stdio=True)
+        st.markdown(f"<div class='pokemon-card'><h3>Dein {st.session_state.player_pkmn['Name']}</h3>", unsafe_allow_html=True)
         st.image(st.session_state.player_pkmn["Bild"], width=150)
         st.progress(max(0, st.session_state.player_hp / st.session_state.player_pkmn["HP"]))
         st.write(f"HP: {st.session_state.player_hp} / {st.session_state.player_pkmn['HP']}")
