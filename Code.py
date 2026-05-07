@@ -14,7 +14,7 @@ st.markdown("""
         border: 2px solid #ed1c24;
     }
     </style>
-    """, unsafe_allow_stdio=True)
+    """, unsafe_allow_html=True)
 
 # --- DATENMODELL ---
 POKEMON_DATA = {
